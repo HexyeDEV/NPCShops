@@ -113,6 +113,11 @@ public class NPCShops extends JavaPlugin implements Listener {
             if (event.getCurrentItem().getType() == Material.BARRIER) {
                 if (event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase(ChatColor.RED + "Delete Shop")) {
                     shops.removeShop(shopName);
+                    for (Villager villager : player.getWorld().getEntitiesByClass(Villager.class)) {
+                        if (villager.getCustomName().equalsIgnoreCase(shopName)) {
+                            villager.remove();
+                        }
+                    }
                     player.sendMessage(ChatColor.GREEN + "You have deleted the shop " + shopName + "!");
                     player.closeInventory();
                     return;
