@@ -1,0 +1,12 @@
+name: NPCShops
+version: '${version}'
+main: me.hexye.npcshops.NPCShops
+author: Hexye
+commands:
+  createshop:
+    description: Creates a shop (Shop name must be unique)
+    usage: /createshop <shop size> <name>
+    permission: NPCShops.createshop
+loadbefore:
+  - Essentials
+  - Vault
