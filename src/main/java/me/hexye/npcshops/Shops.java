@@ -81,12 +81,24 @@ public class Shops {
         File f = new File(Bukkit.getServer().getPluginManager().getPlugin("NPCShops").getDataFolder() + "/shops/" + name + ".yml");
         FileConfiguration c = YamlConfiguration.loadConfiguration(f);
         c.set("Items." + index, null);
-        for (int i=index + 1; i < c.getConfigurationSection("Items").getKeys(false).size(); i++) {
-            String i_string = Integer.toString(i);
-            c.set("Items." + i_string, "Items." + (i - 1));
-        }
         try {
             c.save(f);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Bukkit.getLogger().info("Removed item " + index + " from shop " + name);
+        File f2 = new File(Bukkit.getServer().getPluginManager().getPlugin("NPCShops").getDataFolder() + "/shops/" + name + ".yml");
+        FileConfiguration c2 = YamlConfiguration.loadConfiguration(f2);
+        for (int i = index + 1; i < c2.getConfigurationSection("Items").getKeys(false).size() + 1; i++) {
+            String i_string = Integer.toString(i);
+            String i_string_minus_one = Integer.toString(i - 1);
+            c2.set("Items." + i_string_minus_one + ".item", c2.getItemStack("Items." + i_string + ".item"));
+            c2.set("Items." + i_string_minus_one + ".price", c2.getInt("Items." + i_string + ".price"));
+            c2.set("Items." + i_string, null);
+            Bukkit.getLogger().info(i_string_minus_one + " " + i_string);
+        }
+        try {
+            c2.save(f);
         } catch (Exception e) {
             e.printStackTrace();
         }

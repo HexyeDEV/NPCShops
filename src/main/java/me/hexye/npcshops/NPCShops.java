@@ -168,8 +168,10 @@ public class NPCShops extends JavaPlugin implements Listener {
                 return;
             }
             String shopName = event.getInventory().getName().replace("Add Item ", "");
-            int not_empty_slot = IntStream.range(0, shops.getSize(shopName)).filter(i -> event.getInventory().getItem(i) != null && event.getInventory().getItem(i).getType() != Material.AIR).findFirst().orElse(-1);
-            Bukkit.getLogger().info(not_empty_slot + "");
+            int not_empty_slot = IntStream.range(0, shops.getSize(shopName))
+                    .filter(i -> event.getInventory().getItem(i) != null)
+                    .findFirst()
+                    .orElse(-1);
             if (not_empty_slot != -1) {
                 player.closeInventory();
                 Prompt prompt = new StringPrompt() {
@@ -181,6 +183,21 @@ public class NPCShops extends JavaPlugin implements Listener {
                     @Override
                     public Prompt acceptInput(ConversationContext context, String input) {
                         context.setSessionData("input", input);
+                        try {
+                            int price = Integer.parseInt(input);
+                        } catch (NumberFormatException e) {
+                            return new MessagePrompt() {
+                                @Override
+                                public String getPromptText(ConversationContext context) {
+                                    return ChatColor.RED + "Please type a valid number!";
+                                }
+
+                                @Override
+                                protected Prompt getNextPrompt(ConversationContext context) {
+                                    return null;
+                                }
+                            };
+                        }
                         return new MessagePrompt() {
                             @Override
                             public String getPromptText(ConversationContext context) {
