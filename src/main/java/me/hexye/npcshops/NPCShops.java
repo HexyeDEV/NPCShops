@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -338,6 +339,21 @@ public class NPCShops extends JavaPlugin implements Listener {
                     player.openInventory(inventory);
                 }
             }
+        }
+    }
+
+    @EventHandler()
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        if (event.getEntity() instanceof Villager) {
+            Villager villager = (Villager) event.getEntity();
+            if (villager.getCustomName() == null) {
+                return;
+            }
+            Shops shops = new Shops();
+            if (!shops.shopExists(villager.getCustomName())) {
+                return;
+            }
+            event.setCancelled(true);
         }
     }
 
