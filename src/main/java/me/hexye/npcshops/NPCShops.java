@@ -59,16 +59,6 @@ public class NPCShops extends JavaPlugin implements Listener {
         }
         this.getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getLogger().info(ChatColor.GREEN + "NPCShops has been enabled!");
-        // test
-        File f = new File(Bukkit.getServer().getPluginManager().getPlugin("NPCShops").getDataFolder() + "/shops/test.yml");
-        YamlConfiguration c = YamlConfiguration.loadConfiguration(f);
-        c.set("Items.0.item", new ItemStack(Material.DIAMOND));
-        c.set("Items.0.price", 100);
-        try {
-            c.save(f);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
