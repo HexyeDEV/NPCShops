@@ -252,6 +252,7 @@ public class NPCShops extends JavaPlugin implements Listener {
                 econ.withdrawPlayer(player, price);
                 player.getInventory().addItem(item);
                 player.sendMessage(ChatColor.GREEN + "You have bought the item for " + price + "!");
+                player.closeInventory();
                 return;
             }
             if (event.getAction() == InventoryAction.PICKUP_HALF) {
@@ -283,6 +284,7 @@ public class NPCShops extends JavaPlugin implements Listener {
         player.getInventory().addItem(item);
         econ.withdrawPlayer(player, price);
         player.sendMessage(ChatColor.GREEN + "You have bought " + item.getType().toString() + " for " + price + "! You now have " + econ.getBalance(player) + "!");
+        player.closeInventory();
     }
 
     @EventHandler()
