@@ -68,7 +68,7 @@ public class shopManagerEvent implements Listener {
                 lore.add(ChatColor.RED + "Right click to remove item");
                 meta.setLore(lore);
                 item.setItemMeta(meta);
-                inv.setItem(i, item);
+                inventory.setItem(i, item);
             }
             player.closeInventory();
             player.openInventory(inventory);
