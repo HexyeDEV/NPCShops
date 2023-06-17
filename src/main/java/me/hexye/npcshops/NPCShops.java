@@ -6,7 +6,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.conversations.*;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
@@ -15,7 +14,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -59,6 +57,10 @@ public class NPCShops extends JavaPlugin implements Listener {
             Bukkit.getLogger().info(ChatColor.RED + "Vault economy is not enabled. This plugin depends on Vault economy. Make sure you have Vault economy enabled!");
         }
         this.getServer().getPluginManager().registerEvents(this, this);
+        this.getServer().getPluginManager().registerEvents(new addItemEvent(this), this);
+        this.getServer().getPluginManager().registerEvents(new previewShopEvent(), this);
+        this.getServer().getPluginManager().registerEvents(new shopClickEvent(), this);
+        this.getServer().getPluginManager().registerEvents(new shopManagerEvent(), this);
         Bukkit.getLogger().info(ChatColor.GREEN + "NPCShops has been enabled!");
     }
 
@@ -94,203 +96,6 @@ public class NPCShops extends JavaPlugin implements Listener {
             return true;
         }
         return true;
-    }
-
-    @EventHandler()
-    public void onInventoryClick(InventoryClickEvent event) {
-        Shops shops = new Shops();
-        if (!shops.shopExists(event.getInventory().getName()) && !event.getInventory().getName().startsWith("Shop Manager") && !event.getInventory().getName().startsWith("Add Item ") && !event.getInventory().getName().startsWith("Preview Shop ")) {
-            return;
-        }
-        Player player = (Player) event.getWhoClicked();
-        if (event.getInventory().getName().startsWith("Shop Manager")) {
-            event.setCancelled(true);
-            if (!player.hasPermission("NPCShops.manager")) {
-                player.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
-                return;
-            }
-            String shopName = event.getInventory().getName().replace("Shop Manager ", "");
-            if (event.getCurrentItem().getType() == Material.BARRIER) {
-                if (event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase(ChatColor.RED + "Delete Shop")) {
-                    shops.removeShop(shopName);
-                    for (Villager villager : player.getWorld().getEntitiesByClass(Villager.class)) {
-                        if (villager.getCustomName().equalsIgnoreCase(shopName)) {
-                            villager.remove();
-                        }
-                    }
-                    player.sendMessage(ChatColor.GREEN + "You have deleted the shop " + shopName + "!");
-                    player.closeInventory();
-                    return;
-                }
-            }
-            if (event.getCurrentItem().getType() == Material.CHEST) {
-                if (event.getCurrentItem().getItemMeta().getDisplayName().equalsIgnoreCase(ChatColor.GREEN + "Add Item")) {
-                    player.closeInventory();
-                    Inventory inv = Bukkit.createInventory(null, 9, "Add Item " + shopName);
-                    player.openInventory(inv);
-                    return;
-                }
-            }
-            if (event.getCurrentItem().getType() == Material.BOOK) {
-                Inventory inv = Bukkit.createInventory(null, shops.getSize(shopName), "Preview Shop " + shopName);
-                List<ItemStack> items = shops.getItems(shopName);
-                for (int i = 0; i < items.size(); i++) {
-                    ItemStack item = items.get(i);
-                    if (item == null) {
-                        continue;
-                    }
-                    ItemMeta meta = item.getItemMeta();
-                    List<String> lore = new ArrayList<>();
-                    lore.add(ChatColor.AQUA + "Price: " + shops.getItemPrice(shopName, i));
-                    lore.add(ChatColor.GREEN + "Left click to buy");
-                    lore.add(ChatColor.RED + "Right click to remove item");
-                    meta.setLore(lore);
-                    item.setItemMeta(meta);
-                    inv.setItem(i, item);
-                }
-                player.closeInventory();
-                player.openInventory(inv);
-                return;
-            }
-            return;
-        }
-        if (event.getInventory().getName().startsWith("Add Item ")) {
-            if (!player.hasPermission("NPCShops.manager")) {
-                player.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
-                return;
-            }
-            InventoryAction action = event.getAction();
-            if (action != InventoryAction.PLACE_ALL && action != InventoryAction.PLACE_ONE && action != InventoryAction.PLACE_SOME) {
-                return;
-            }
-            String shopName = event.getInventory().getName().replace("Add Item ", "");
-            int not_empty_slot = IntStream.range(0, shops.getSize(shopName))
-                    .filter(i -> event.getInventory().getItem(i) != null)
-                    .findFirst()
-                    .orElse(-1);
-            if (not_empty_slot != -1) {
-                player.closeInventory();
-                Prompt prompt = new StringPrompt() {
-                    @Override
-                    public String getPromptText(ConversationContext context) {
-                        return ChatColor.GREEN + "Please type the price for the item in chat (Type cancel to cancel).";
-                    }
-
-                    @Override
-                    public Prompt acceptInput(ConversationContext context, String input) {
-                        context.setSessionData("input", input);
-                        try {
-                            int price = Integer.parseInt(input);
-                        } catch (NumberFormatException e) {
-                            return new MessagePrompt() {
-                                @Override
-                                public String getPromptText(ConversationContext context) {
-                                    return ChatColor.RED + "Please type a valid number!";
-                                }
-
-                                @Override
-                                protected Prompt getNextPrompt(ConversationContext context) {
-                                    return null;
-                                }
-                            };
-                        }
-                        return new MessagePrompt() {
-                            @Override
-                            public String getPromptText(ConversationContext context) {
-                                return ChatColor.GREEN + "You have set the price to " + input + "!";
-                            }
-
-                            @Override
-                            public Prompt acceptInput(ConversationContext context, String input) {
-                                ItemStack item = event.getInventory().getItem(not_empty_slot);
-                                List<ItemStack> items = shops.getItems(shopName);
-                                int slot = 0;
-                                for (ItemStack item1 : items) {
-                                    if (item1 == null) {
-                                        break;
-                                    }
-                                    slot++;
-                                }
-                                shops.addItem(shopName, item, slot, Integer.parseInt((String) context.getSessionData("input")));
-                                player.sendMessage(ChatColor.GREEN + "You have added the item to the shop " + shopName + "!");
-                                return Prompt.END_OF_CONVERSATION;
-                            }
-
-                            @Override
-                            protected Prompt getNextPrompt(ConversationContext context) {
-                                return null;
-                            }
-                        };
-                    }
-                };
-                ConversationFactory factory = new ConversationFactory(this).withEscapeSequence("cancel");
-                Conversation conversation = factory.withFirstPrompt(prompt).withLocalEcho(false).buildConversation(player);
-                conversation.begin();
-            }
-            return;
-        }
-        if (event.getInventory().getName().startsWith("Preview Shop ")) {
-            String shopName = event.getInventory().getName().replace("Preview Shop ", "");
-            if (event.getCurrentItem().getType() == Material.AIR) {
-                return;
-            }
-            event.setCancelled(true);
-            int slot = event.getSlot();
-            if (event.getAction() == InventoryAction.PICKUP_ALL) {
-                int price = shops.getItemPrice(shopName, slot);
-                if (!setupEconomy()) {
-                    RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-                    econ = rsp.getProvider();
-                }
-                if (econ == null) {
-                    Bukkit.getLogger().info(ChatColor.RED + "Vault economy is not enabled. This plugin depends on Vault economy. Make sure you have Vault economy enabled!");
-                    return;
-                }
-                if (econ.getBalance(player) < price) {
-                    player.sendMessage(ChatColor.RED + "You do not have enough money to buy this item!");
-                    return;
-                }
-                ItemStack item = event.getCurrentItem();
-                if (player.getInventory().firstEmpty() == -1) {
-                    player.sendMessage(ChatColor.RED + "You do not have enough space in your inventory to buy this item!");
-                    return;
-                }
-                econ.withdrawPlayer(player, price);
-                player.getInventory().addItem(item);
-                player.sendMessage(ChatColor.GREEN + "You have bought the item for " + price + "!");
-                player.closeInventory();
-                return;
-            }
-            if (event.getAction() == InventoryAction.PICKUP_HALF) {
-                shops.removeItem(shopName, slot);
-                player.sendMessage(ChatColor.GREEN + "You have removed the item from the shop!");
-                return;
-            }
-        }
-        event.setCancelled(true);
-        if (!player.hasPermission("NPCShops.use")) {
-            player.sendMessage(ChatColor.RED + "You do not have permission to use this shop!");
-            return;
-        }
-        int slot = event.getSlot();
-        int price = shops.getItemPrice(event.getInventory().getName(), slot);
-        if (!setupEconomy()) {
-            RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-            econ = rsp.getProvider();
-        }
-        if (econ == null) {
-            Bukkit.getLogger().info(ChatColor.RED + "Vault economy is not enabled. This plugin depends on Vault economy. Make sure you have Vault economy enabled!");
-            return;
-        }
-        if (econ.getBalance(player) < price) {
-            player.sendMessage(ChatColor.RED + "You do not have enough money to buy this item!");
-            return;
-        }
-        ItemStack item = event.getCurrentItem();
-        player.getInventory().addItem(item);
-        econ.withdrawPlayer(player, price);
-        player.sendMessage(ChatColor.GREEN + "You have bought " + item.getType().toString() + " for " + price + "! You now have " + econ.getBalance(player) + "!");
-        player.closeInventory();
     }
 
     @EventHandler()
