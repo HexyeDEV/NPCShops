@@ -30,7 +30,7 @@ public class shopClickEvent implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         Shops shops = new Shops();
-        if (!shops.shopExists(event.getInventory().getName())) {
+        if (!shops.shopExists(event.getInventory().getViewers().get(0).getOpenInventory().getTitle())) {
             return;
         }
         event.setCancelled(true);
@@ -40,7 +40,7 @@ public class shopClickEvent implements Listener {
             return;
         }
         int slot = event.getSlot();
-        int price = shops.getItemPrice(event.getInventory().getName(), slot);
+        int price = shops.getItemPrice(event.getInventory().getViewers().get(0).getOpenInventory().getTitle(), slot);
         if (!setupEconomy()) {
             RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
             econ = rsp.getProvider();

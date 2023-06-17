@@ -18,7 +18,7 @@ import java.util.List;
 public class shopManagerEvent implements Listener {
     @EventHandler()
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getInventory().getName().startsWith("Shop Manager ")) {
+        if (!event.getInventory().getViewers().get(0).getOpenInventory().getTitle().startsWith("Shop Manager ")) {
             return;
         }
         Player player = (Player) event.getWhoClicked();
@@ -28,7 +28,7 @@ public class shopManagerEvent implements Listener {
         }
         event.setCancelled(true);
         Inventory inv = event.getInventory();
-        String shopName = inv.getName().replace("Shop Manager ", "");
+        String shopName = inv.getViewers().get(0).getOpenInventory().getTitle().replace("Shop Manager ", "");
         Shops shops = new Shops();
         if (!shops.shopExists(shopName)) {
             player.sendMessage(ChatColor.RED + "Shop doesn't exist!");
