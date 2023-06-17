@@ -30,14 +30,14 @@ public class previewShopEvent implements Listener {
 
     @EventHandler()
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getInventory().getViewers().get(0).getOpenInventory().getTitle().startsWith("Preview Shop ")) {
+        if (!event.getInventory().getName().startsWith("Preview Shop ")) {
             return;
         }
         event.setCancelled(true);
         int slot = event.getSlot();
         Player player = (Player) event.getWhoClicked();
         Shops shops = new Shops();
-        String shopName = event.getInventory().getViewers().get(0).getOpenInventory().getTitle().replace("Preview Shop ", "");
+        String shopName = event.getInventory().getName().replace("Preview Shop ", "");
         if (event.getAction() == InventoryAction.PICKUP_ALL) {
             int price = shops.getItemPrice(shopName, slot);
             if (!setupEconomy()) {

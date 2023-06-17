@@ -19,7 +19,7 @@ public class addItemEvent implements Listener {
     }
     @EventHandler()
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getInventory().getViewers().get(0).getOpenInventory().getTitle().startsWith("Add Item ")) {
+        if (!event.getInventory().getName().startsWith("Add Item ")) {
             return;
         }
         Player player = (Player) event.getWhoClicked();
@@ -28,7 +28,7 @@ public class addItemEvent implements Listener {
             return;
         }
         Shops shops = new Shops();
-        String shopName = event.getInventory().getViewers().get(0).getOpenInventory().getTitle().replace("Add Item ", "");
+        String shopName = event.getInventory().getName().replace("Add Item ", "");
         Bukkit.getScheduler().runTask(plugin, () -> {
             int not_empty_slot = IntStream.range(0, 9)
                     .filter(i -> event.getInventory().getItem(i) != null)
