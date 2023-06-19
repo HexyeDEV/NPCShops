@@ -78,7 +78,22 @@ public class NPCShops extends JavaPlugin implements Listener {
                 sender.sendMessage(ChatColor.RED + "Please specify a size and a name for the shop!");
                 return true;
             }
-            int size = Integer.parseInt(args[0]);
+            int size = 0;
+            try {
+                size = Integer.parseInt(args[0]);
+            }
+            catch (NumberFormatException e) {
+                sender.sendMessage(ChatColor.RED + "Please specify valid a size and a name for the shop!");
+                return true;
+            }
+            if (size % 9 != 0) {
+                sender.sendMessage(ChatColor.RED + "Please specify a size that is a multiple of 9!");
+                return true;
+            }
+            if (size > 54) {
+                sender.sendMessage(ChatColor.RED + "Please specify a size that is less than or equal to 54!");
+                return true;
+            }
             String name = String.join(" ", Arrays.asList(args).subList(1, args.length));
             Shops shops = new Shops();
             shops.addShop(name, size);
