@@ -3,3 +3,9 @@ version: '${version}'
 main: me.hexye.npcshops.NPCShops
 softdepend: [Vault]
 authors: [Hexye]
+commands:
+  createshop:
+    description: Create a shop
+    usage: /createshop <size> <name>
+    permission: npcshops.admin
+    permission-message: You do not have permission to use this command.

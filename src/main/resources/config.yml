@@ -1,0 +1,2 @@
+# storage-type: 0 for YAML, 1 for SQLIte 2 for MySQL
+storage-type: 0
