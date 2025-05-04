@@ -1,0 +1,5 @@
+name: NPCShops
+version: '${version}'
+main: me.hexye.npcshops.NPCShops
+softdepend: [Vault]
+authors: [Hexye]
