@@ -1,5 +1,6 @@
 package me.hexye.npcshops.items;
 
+
 import org.bukkit.inventory.ItemStack;
 
 public class ShopItem {

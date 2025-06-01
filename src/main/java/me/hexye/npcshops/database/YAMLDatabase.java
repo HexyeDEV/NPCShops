@@ -29,6 +29,7 @@ public class YAMLDatabase implements Database {
     @Override
     public void setupDatabase() {
         shops = YamlConfiguration.loadConfiguration(shopsFile);
+        loadShops();
     }
 
     @Override

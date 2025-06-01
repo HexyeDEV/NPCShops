@@ -37,7 +37,7 @@ public final class NPCShops extends JavaPlugin {
         return config;
     }
 
-    public static Database getDatabase() {
+    public Database getDatabase() {
         return database;
     }
 }
