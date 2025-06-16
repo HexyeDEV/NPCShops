@@ -24,6 +24,15 @@ public class Shop {
         this.shopId = UUID.randomUUID();
     }
 
+    public Shop(Villager villager, Location location, String name, int size, List<ShopItem> items, UUID shopId) {
+        this.villager = villager;
+        this.location = location;
+        this.name = name;
+        this.size = size;
+        this.items = items;
+        this.shopId = shopId;
+    }
+
     public Villager getVillager() {
         return villager;
     }

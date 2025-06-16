@@ -8,19 +8,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Villager;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.metadata.MetadataValue;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class YAMLDatabase implements Database {
     private final File shopsFile = new File(NPCShops.getInstance().getDataFolder(), "shops.yml");
@@ -58,17 +53,32 @@ public class YAMLDatabase implements Database {
                 ShopItem shopItem = new ShopItem(base64, item, price);
                 shopItems.add(shopItem);
             }
-            Villager villager = location.getWorld().spawn(location, Villager.class);
-            villager.setCustomName(ChatColor.translateAlternateColorCodes('&', name));
-            villager.setCustomNameVisible(true);
-            villager.setAI(false);
-            villager.setCollidable(false);
-            villager.setSilent(true);
-            villager.setInvulnerable(true);
-            villager.setGravity(false);
-            villager.setMetadata("NPCShopsID", new FixedMetadataValue(NPCShops.getInstance(), shopId.toString()));
 
-            Shop shop = new Shop(villager, location, name, size, shopItems);
+            boolean found = false;
+            Villager villager = null;
+            Collection<Entity> nearbyEntities = location.getWorld().getNearbyEntities(location, 1, 1, 1);
+            for (Entity entity : nearbyEntities) {
+                if (entity instanceof Villager) {
+                    villager = (Villager) entity;
+                    villager.setMetadata("NPCShopsID", new FixedMetadataValue(NPCShops.getInstance(), shopId.toString()));
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                villager = location.getWorld().spawn(location, Villager.class);
+                villager.setCustomName(ChatColor.translateAlternateColorCodes('&', name));
+                villager.setCustomNameVisible(true);
+                villager.setAI(false);
+                villager.setCollidable(false);
+                villager.setSilent(true);
+                villager.setInvulnerable(true);
+                villager.setGravity(false);
+                villager.setMetadata("NPCShopsID", new FixedMetadataValue(NPCShops.getInstance(), shopId.toString()));
+            }
+
+            Shop shop = new Shop(villager, location, name, size, shopItems, shopId);
             shopMap.put(shopId, shop);
         }
     }
@@ -97,15 +107,16 @@ public class YAMLDatabase implements Database {
 
     @Override
     public void deleteShop(UUID shopId) {
+        Shop shop = shopMap.get(shopId);
+        Villager villager = shop.getVillager();
+        if (villager != null) {
+            villager.remove();
+        }
+        shops.set(shopId.toString(), null);
+        shopMap.remove(shopId);
         new BukkitRunnable() {
             @Override
             public void run() {
-                Villager villager = (Villager) shopMap.get(shopId).getVillager();
-                if (villager != null) {
-                    villager.remove();
-                }
-                shops.set(shopId.toString(), null);
-                shopMap.remove(shopId);
                 try {
                     shops.save(shopsFile);
                 } catch (IOException e) {
@@ -117,37 +128,32 @@ public class YAMLDatabase implements Database {
 
     @Override
     public void addItemToShop(UUID shopId, ItemStack itemStack, int price) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                ShopItem shopItem = new ShopItem(ItemSerializer.itemTo64(itemStack), itemStack, price);
-                Shop shop = shopMap.get(shopId);
-                if (shop != null) {
-                    shop.addItem(shopItem);
-                    saveShop(shopId, shop);
-                } else {
-                    Bukkit.getLogger().warning("Shop with ID " + shopId + " not found.");
-                }
-            }
-        }.runTaskAsynchronously(NPCShops.getInstance());
+        Shop shop = shopMap.get(shopId);
+        ShopItem shopItem = new ShopItem(ItemSerializer.itemTo64(itemStack), itemStack, price);
+        if (shop != null) {
+            shop.addItem(shopItem);
+            saveShop(shopId, shop);
+        } else {
+            Bukkit.getLogger().warning("Shop with ID " + shopId + " not found.");
+        }
     }
 
     @Override
     public void saveShop(UUID shopId, Shop shop) {
+        shops.set(shopId + ".location", shop.getLocation());
+        shops.set(shopId + ".name", shop.getName());
+        shops.set(shopId + ".size", shop.getSize());
+        List<String> itemsBase64s = new ArrayList<>();
+        List<Integer> prices = new ArrayList<>();
+        for (ShopItem item : shop.getItems()) {
+            itemsBase64s.add(item.getBase64Item());
+            prices.add(item.getPrice());
+        }
+        shops.set(shopId + ".items", itemsBase64s);
+        shops.set(shopId + ".prices", prices);
         new BukkitRunnable() {
             @Override
             public void run() {
-                shops.set(shopId + ".location", shop.getLocation());
-                shops.set(shopId + ".name", shop.getName());
-                shops.set(shopId + ".size", shop.getSize());
-                List<String> itemsBase64s = new ArrayList<>();
-                List<Integer> prices = new ArrayList<>();
-                for (ShopItem item : shop.getItems()) {
-                    itemsBase64s.add(item.getBase64Item());
-                    prices.add(item.getPrice());
-                }
-                shops.set(shopId + ".items", itemsBase64s);
-                shops.set(shopId + ".prices", prices);
                 try {
                     shops.save(shopsFile);
                 } catch (IOException e) {

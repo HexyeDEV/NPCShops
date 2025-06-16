@@ -1,11 +1,16 @@
 package me.hexye.npcshops.menus;
 
+import me.hexye.npcshops.NPCShops;
+import me.hexye.npcshops.database.Database;
 import me.hexye.npcshops.items.ShopItem;
 import me.hexye.npcshops.shops.Shop;
+import me.hexye.npcshops.utils.Messages;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,8 +40,7 @@ public class ShopMenu extends Menu{
         List<ShopItem> items = shop.getItems();
         for (int i = 0; i < items.size(); i++) {
             ShopItem item = items.get(i);
-            int slot = i; // Assuming the slot is the index in the list
-            addButton(new Button(slot) {;
+            addButton(new Button(i) {;
                 @Override
                 public ItemStack getItem() {
                     return item.getItemStack();
@@ -55,12 +59,13 @@ public class ShopMenu extends Menu{
     }
 
     private final void loadAdminButtons() {
-        // Button to add item or view the shop.
         addButton(new Button(0) {
             @Override
             public ItemStack getItem() {
                 ItemStack item = new ItemStack(Material.BOOK);
-                item.getItemMeta().setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aAdd Item"));
+                ItemMeta meta = item.getItemMeta();
+                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&aAdd Item"));
+                item.setItemMeta(meta);
                 return item;
             }
 
@@ -74,7 +79,9 @@ public class ShopMenu extends Menu{
             @Override
             public ItemStack getItem() {
                 ItemStack item = new ItemStack(Material.BARRIER);
-                item.getItemMeta().setDisplayName(ChatColor.translateAlternateColorCodes('&', "&cDelete Shop"));
+                ItemMeta meta = item.getItemMeta();
+                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&cDelete Shop"));
+                item.setItemMeta(meta);
                 return item;
             }
 
@@ -88,7 +95,9 @@ public class ShopMenu extends Menu{
             @Override
             public ItemStack getItem() {
                 ItemStack item = new ItemStack(Material.CHEST);
-                item.getItemMeta().setDisplayName(ChatColor.translateAlternateColorCodes('&', "&bView Shop"));
+                ItemMeta meta = item.getItemMeta();
+                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&bView Shop"));
+                item.setItemMeta(meta);
                 return item;
             }
 
@@ -108,6 +117,8 @@ public class ShopMenu extends Menu{
     }
 
     private final void deleteShop() {
-
+        Database database = NPCShops.getInstance().getDatabase();
+        database.deleteShop(shop.getShopId());
+        Messages.sendMessage(player, NPCShops.getInstance().getMessage("delete-shop"));
     }
 }
